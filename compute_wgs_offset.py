@@ -1,4 +1,7 @@
 
+# Computes the offsets for south-north and east-west direction
+# from an postgis-database
+
 import csv
 import re
 
