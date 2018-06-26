@@ -2,6 +2,7 @@
 import time
 import json
 import yaml
+import sys
 
 
 # Returns tuple (intercept, steigung)
@@ -22,6 +23,7 @@ def transform_coord(x_val, params):
 
 # Recursive function to transform single coordinates
 def recursive_coord_transform(geo_object, lon_params, lat_params):
+
     if len(geo_object) == 2 and isinstance(geo_object[0], float):
         geo_object[0] = transform_coord(geo_object[0], lon_params)
         geo_object[1] = transform_coord(geo_object[1], lon_params)
@@ -30,18 +32,23 @@ def recursive_coord_transform(geo_object, lon_params, lat_params):
             recursive_coord_transform(sub_object, lon_params, lat_params)
 
 
+if len(sys.argv) != 3:
+    print("USAGE: python3 transform-coords.py input_file output_file")
 lat_params = read_linear_params("coeff-linear-sn.yaml")
 lon_params = read_linear_params("coeff-linear-we.yaml")
 
 
-with open("germany_1871.geojson") as fh:
+with open(sys.argv[1]) as fh:
     germany = json.load(fh)
 
 feature_count = []
 
 for feature in germany["features"]:
-    for multipoly in feature["geometry"]["coordinates"]:
-        recursive_coord_transform(multipoly, lon_params, lat_params)
+    recursive_coord_transform(
+        feature["geometry"]["coordinates"],
+        lon_params,
+        lat_params
+    )
         # for poly in multipoly:
         #         for coords_idx, coords in enumerate(poly):
         #             if isinstance(coords, list):
@@ -53,7 +60,7 @@ for feature in germany["features"]:
         #                 else:
         #                     coords = transform_coord(coords, lat_params)
 
-geojson_name = "germany_1871_transformed_" + str(int(time.time())) + ".geojson"
+# geojson_name = "germany_1871_transformed_" + str(int(time.time())) + ".geojson"
 
-with open(geojson_name, "w+") as fh_out:
+with open(sys.argv[2], "w+") as fh_out:
     json.dump(germany, fh_out)
